@@ -1,8 +1,19 @@
 import api, { unwrapApiResponse } from './api';
 
-export const getAppointments = async () => unwrapApiResponse(await api.get('/api/appointments'));
-export const getAppointmentById = async (id) => unwrapApiResponse(await api.get(`/api/appointments/${id}`));
-export const bookAppointment = async (payload) => unwrapApiResponse(await api.post('/api/appointments', payload));
+const sanitizeAppointmentPayload = (payload = {}) => ({
+  patientId: payload.patientId ? Number(payload.patientId) : null,
+  doctorId: payload.doctorId ? Number(payload.doctorId) : null,
+  appointmentDateTime: payload.appointmentDateTime,
+  reason: payload.reason?.trim(),
+  notes: payload.notes?.trim() || null,
+});
+
+const requestData = async (request) => unwrapApiResponse(await request);
+
+export const getAllAppointments = async () => requestData(api.get('/api/appointments'));
+export const getAppointments = getAllAppointments;
+export const getAppointmentById = async (id) => requestData(api.get(`/api/appointments/${id}`));
+export const bookAppointment = async (payload) => requestData(api.post('/api/appointments', sanitizeAppointmentPayload(payload)));
 export const rescheduleAppointment = async (id, payload) =>
-  unwrapApiResponse(await api.put(`/api/appointments/reschedule/${id}`, payload));
-export const cancelAppointment = async (id) => unwrapApiResponse(await api.put(`/api/appointments/cancel/${id}`));
+  requestData(api.put(`/api/appointments/reschedule/${id}`, sanitizeAppointmentPayload(payload)));
+export const cancelAppointment = async (id) => requestData(api.put(`/api/appointments/cancel/${id}`));
