@@ -1,7 +1,12 @@
 package com.hms.repository;
 
-import com.hms.entity.Role;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import com.hms.entity.Role;
+
 public interface RoleRepository extends JpaRepository<Role, Long> {
+
+	Optional<Role> findByNameIgnoreCase(String name);
 }

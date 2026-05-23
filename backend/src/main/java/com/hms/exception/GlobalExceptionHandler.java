@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -31,6 +32,24 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.UNAUTHORIZED, exception.getMessage(), request, null);
     }
 
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCredentials(InvalidCredentialsException exception,
+                                                                  HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, exception.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleUserAlreadyExists(UserAlreadyExistsException exception,
+                                                                 HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException exception,
+                                                            HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.FORBIDDEN, exception.getMessage(), request, null);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationErrors(MethodArgumentNotValidException exception,
                                                                 HttpServletRequest request) {
@@ -52,8 +71,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception exception,
                                                                 HttpServletRequest request) {
-        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected server error", request,
-                List.of(exception.getMessage()));
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected server error", request, null);
     }
 
     private ResponseEntity<ErrorResponse> buildErrorResponse(HttpStatus status,

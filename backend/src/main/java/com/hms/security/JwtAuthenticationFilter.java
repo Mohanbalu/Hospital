@@ -11,6 +11,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.hms.util.AppConstants;
 
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,18 +38,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         final String jwtToken = authorizationHeader.substring(AppConstants.BEARER_PREFIX.length());
-        final String username = jwtService.extractUsername(jwtToken);
+        try {
+            final String username = jwtService.extractUsername(jwtToken);
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
-            if (jwtService.isTokenValid(jwtToken, userDetails)) {
-                UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities());
-                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
+                if (jwtService.isTokenValid(jwtToken, userDetails)) {
+                    UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities());
+                    authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                }
             }
+        } catch (JwtException | IllegalArgumentException exception) {
+            SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);
